@@ -119,12 +119,26 @@ button:disabled{
   color:#777;
   border-top:1px solid #eee;
 }
+.site-header{
+  width:100%;
+  background:#fff;
+  text-align:center;
+}
+
+.site-header img{
+  width:100%;
+  max-height:180px;
+  object-fit:cover;
+  display:block;
+}
 </style>
 </head>
 <body>
 
 <div class="card">
-
+<div class="site-header">
+  <img src="c:\Users\BR737\Downloads\chá entre meninas 20 de março.png" alt="Banner do evento">
+</div>
   <div class="header">
     <h1>Inscrição para o Chá entre Meninas</h1>
     <p>Preencha seus dados para garantir sua participação</p>
@@ -176,7 +190,7 @@ const msg  = document.getElementById("msg");
 const btn  = document.getElementById("btn");
 
 /* URL do Web App (Google Apps Script) */
-const urlScript = "https://script.google.com/macros/s/AKfycbw_b4zpX14IshkmMYjPhWOS6p5nbATczGTquY20g82gCoioFpC-vLpJ-mOCPbjgdXo9Mw/exec";
+const urlScript = "https://script.google.com/macros/s/AKfycbxcOp5me1CGmbPyO7vM3RrO85kEFojAyDL74rUjHjG9vq2I-C6fVYcrbmBMsm-D7Ir0tg/exec";
 
 /* Seu link de pagamento */
 const linkPagamento = "https://checkout.nubank.com.br/7c5DzBjn7G13vdnd";
@@ -213,6 +227,56 @@ form.addEventListener("submit", function(e){
   });
 
 });
+function gerarComprovante(id){
+
+  const nome = document.querySelector('[name="nome"]').value;
+  const telefone = document.querySelector('[name="telefone"]').value;
+  const email = document.querySelector('[name="email"]').value;
+  const congregacao = document.querySelector('[name="congregacao"]').value;
+
+  const data = new Date().toLocaleString("pt-BR");
+
+  const tela = window.open("", "_blank");
+
+  tela.document.write(`
+    <html>
+    <head>
+      <title>Comprovante de Inscrição</title>
+      <style>
+        body{font-family:Arial;padding:30px;}
+        .box{max-width:600px;margin:auto;border:1px solid #ccc;padding:25px}
+        h2{text-align:center}
+        p{margin:8px 0}
+        .id{font-size:18px;font-weight:bold}
+      </style>
+    </head>
+    <body onload="window.print()">
+
+      <div class="box">
+        <h2>Comprovante de Inscrição</h2>
+
+        <p class="id">Código da inscrição: ${id}</p>
+        <p><b>Nome:</b> ${nome}</p>
+        <p><b>Telefone:</b> ${telefone}</p>
+        <p><b>E-mail:</b> ${email}</p>
+        <p><b>Congregação:</b> ${congregacao}</p>
+        <p><b>Data:</b> ${data}</p>
+
+        <hr>
+        <p>Guarde este comprovante.</p>
+      </div>
+
+    </body>
+    </html>
+  `);
+
+  tela.document.close();
+
+  setTimeout(() => {
+    window.location.href = linkPagamento;
+  }, 1500);
+}
+</script>
 </script>
 
 </body>
