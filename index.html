@@ -262,8 +262,10 @@ form.addEventListener("submit", function(e){
     if(resposta.trim() === "OK"){
 
       const confirmar = confirm(
-        "⚠️ Atenção!\n\nEnvie o seu comprovante para o seu líder de área.\n\nDeseja continuar para o pagamento?"
-      );
+  "🟢 CONFIRMAÇÃO NECESSÁRIA\n\n" +
+  "Antes de prosseguir para o pagamento, é obrigatório enviar o comprovante de inscrição ao seu líder de área.\n\n" +
+  "Deseja continuar agora para o pagamento?"
+);
 
       if(confirmar){
         msg.innerText = "Inscrição realizada. Redirecionando para o pagamento...";
@@ -338,6 +340,7 @@ function gerarComprovante(id){
 
 </body>
 </html>
+
 
 
 
