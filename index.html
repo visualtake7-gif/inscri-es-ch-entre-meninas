@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>UAADEM - INSCRIÇÕES </title>
+<title>Inscrição – Evento</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -31,7 +31,7 @@ body{
 }
 
 .header{
-  background:linear-gradient(135deg,#046101,#046101);
+  background:linear-gradient(135deg,#08a002,#046101);
   color:#ffffff;
   padding:24px 24px 20px 24px;
 }
@@ -220,7 +220,7 @@ select option[value=""]{
       <button type="submit" id="btn">
         Continuar para o pagamento
       </button>
-
+      
     </form>
 
     <div id="msg"></div>
@@ -260,10 +260,23 @@ form.addEventListener("submit", function(e){
   .then(resposta => {
 
     if(resposta.trim() === "OK"){
-      msg.innerText = "Inscrição realizada. Redirecionando para o pagamento...";
-      setTimeout(() => {
-        window.location.href = linkPagamento;
-      }, 800);
+
+      const confirmar = confirm(
+        "⚠️ Atenção!\n\nEnvie o seu comprovante para o seu líder de área.\n\nDeseja continuar para o pagamento?"
+      );
+
+      if(confirmar){
+        msg.innerText = "Inscrição realizada. Redirecionando para o pagamento...";
+
+        setTimeout(() => {
+          window.location.href = linkPagamento;
+        }, 800);
+
+      }else{
+        msg.innerText = "Envie o comprovante ao seu líder apos pagamento ";
+        btn.disabled = false;
+      }
+
     }else{
       msg.innerText = "Não foi possível salvar sua inscrição.";
       btn.disabled = false;
@@ -276,12 +289,15 @@ form.addEventListener("submit", function(e){
   });
 
 });
+
+
 function gerarComprovante(id){
 
   const nome = document.querySelector('[name="nome"]').value;
   const telefone = document.querySelector('[name="telefone"]').value;
   const email = document.querySelector('[name="email"]').value;
   const congregacao = document.querySelector('[name="congregacao"]').value;
+  const area = document.querySelector('[name="area"]').value;
 
   const data = new Date().toLocaleString("pt-BR");
 
@@ -290,29 +306,26 @@ function gerarComprovante(id){
   tela.document.write(`
     <html>
     <head>
-      <title>Comprovante de Inscrição</title>
+      <title>Comprovante de inscrição</title>
       <style>
-        body{font-family:Arial;padding:30px;}
-        .box{max-width:600px;margin:auto;border:1px solid #ccc;padding:25px}
+        body{font-family:Arial;padding:30px}
+        .box{max-width:600px;margin:auto;border:1px solid #ccc;padding:20px}
         h2{text-align:center}
-        p{margin:8px 0}
-        .id{font-size:18px;font-weight:bold}
       </style>
     </head>
-    <body onload="window.print()">
+    <body>
 
       <div class="box">
-        <h2>Comprovante de Inscrição</h2>
+        <h2>Comprovante de inscrição</h2>
 
-        <p class="id">Código da inscrição: ${id}</p>
+        <p><b>Código:</b> ${id}</p>
         <p><b>Nome:</b> ${nome}</p>
         <p><b>Telefone:</b> ${telefone}</p>
         <p><b>E-mail:</b> ${email}</p>
         <p><b>Congregação:</b> ${congregacao}</p>
+        <p><b>Área:</b> ${area}</p>
         <p><b>Data:</b> ${data}</p>
 
-        <hr>
-        <p>Guarde este comprovante.</p>
       </div>
 
     </body>
@@ -320,20 +333,11 @@ function gerarComprovante(id){
   `);
 
   tela.document.close();
-
-  setTimeout(() => {
-    window.location.href = linkPagamento;
-  }, 1500);
 }
-</script>
 </script>
 
 </body>
 </html>
-
-
-
-
 
 
 
