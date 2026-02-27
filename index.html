@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>UAADEM - ISCRIÇÕES</title>
-<link rel="icon" href="Logo uaadem .png" type="image/png">
 <link rel="icon" href="UAADEM (1).png" type="image/png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -222,7 +221,7 @@ select option[value=""]{
       <button type="submit" id="btn">
         Continuar para o pagamento
       </button>
-
+      
     </form>
 
     <div id="msg"></div>
@@ -241,7 +240,7 @@ const msg  = document.getElementById("msg");
 const btn  = document.getElementById("btn");
 
 /* URL do Web App (Google Apps Script) */
-const urlScript = "https://script.google.com/macros/s/AKfycbwWzJHbULwhdNZ9NCdOC5u2tRT9BbQY6C0ncYwt-p6EOGVuRW5FelFYmvDh2bj6hDufNA/exec";
+const urlScript = "https://script.google.com/macros/s/AKfycbzLJNY_cuwUR48DgiY-7BwSqLuakJdTTYa7RrtQp68I-hBf68xCdZVZFiAJ2kAxEHRzqg/exec";
 
 /* Seu link de pagamento */
 const linkPagamento = "https://nubank.com.br/cobrar/1hn784/699e2dff-9a8d-4981-a675-900528c414c6";
@@ -262,13 +261,13 @@ form.addEventListener("submit", function(e){
   .then(resposta => {
 
     if(resposta.trim() === "OK"){
-      
-const confirmar = confirm(
+
+      const confirmar = confirm(
   "🟢 CONFIRMAÇÃO NECESSÁRIA\n\n" +
-  "Sua confirmação será enviada por e-mail.\n\n" +
   "Antes de prosseguir para o pagamento, é obrigatório enviar o comprovante de inscrição ao seu líder de área.\n\n" +
   "Deseja continuar agora para o pagamento?"
 );
+
       if(confirmar){
         msg.innerText = "Inscrição realizada. Redirecionando para o pagamento...";
 
@@ -342,5 +341,10 @@ function gerarComprovante(id){
 
 </body>
 </html>
+
+
+
+
+
 
 
