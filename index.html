@@ -34,7 +34,6 @@ body{
   padding:20px;
 }
 
-/* Subtle noise overlay */
 body::before{
   content:""; position:fixed; inset:0; pointer-events:none;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
@@ -118,7 +117,7 @@ input, select{
 }
 input:focus, select:focus{
   border-color:var(--green-bright);
-  box-shadow:0 0 0 3px rgba(8,160,2,.1);
+  box-shadow:0 0 0 3px rgba(26,95,212,.1);
 }
 input:disabled, select:disabled{
   background:#f5f5f5; color:#999; cursor:not-allowed;
@@ -144,10 +143,20 @@ select{
 
 .btn-pagar{
   background:linear-gradient(135deg,#c9930a,#e07b00);
-  color:#fff; font-size:16px; padding:16px; margin-bottom:18px;
+  color:#fff; font-size:16px; padding:16px; margin-bottom:12px;
   box-shadow:0 6px 18px rgba(200,140,0,.3);
 }
 .btn-pagar:hover{ box-shadow:0 10px 24px rgba(200,140,0,.45); }
+
+/* Botão "Já paguei" */
+.btn-japaguei{
+  background:linear-gradient(135deg,var(--green-bright),var(--green-dark));
+  color:#fff; font-size:15px; padding:14px;
+  box-shadow:0 6px 18px rgba(26,95,212,.25);
+  display:none;
+}
+.btn-japaguei:hover{ box-shadow:0 10px 24px rgba(26,95,212,.4); }
+.btn-japaguei.show{ display:block; }
 
 .btn-confirmar{
   background:linear-gradient(135deg,var(--green-bright),var(--green-dark));
@@ -163,7 +172,6 @@ select{
   background:var(--gold-light); transition:.2s;
 }
 .upload-box:hover{ background:#fff3cc; border-color:var(--gold); }
-.upload-box.disabled{ opacity:.5; pointer-events:none; }
 .upload-box input[type="file"]{ display:none; }
 .upload-icon{ font-size:30px; margin-bottom:6px; }
 .upload-box p{ margin:4px 0 0; font-size:13px; color:#888; }
@@ -179,11 +187,11 @@ select{
 /* ── Divider ───────────────────────────────────────── */
 .divisor{
   display:flex; align-items:center; gap:10px;
-  margin:20px 0; color:#bbb; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.8px;
+  margin:16px 0; color:#bbb; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.8px;
 }
 .divisor::before,.divisor::after{ content:""; flex:1; height:1px; background:#e5e5e5; }
 
-/* ── Payment badge (shown after return) ────────────── */
+/* ── Badge pagamento confirmado ────────────────────── */
 .badge-pago{
   display:none; align-items:center; gap:10px;
   background:#e8f5e9; border:1.5px solid #4caf50; border-radius:10px;
@@ -192,8 +200,28 @@ select{
 .badge-pago .ico{ font-size:22px; }
 .badge-pago.show{ display:flex; }
 
+/* ── Aguardando pagamento box ──────────────────────── */
+.aguardando-box{
+  display:none;
+  background:#f0f4ff; border:1.5px solid #b0c4f5;
+  border-radius:10px; padding:16px; margin-bottom:16px;
+  text-align:center;
+}
+.aguardando-box.show{ display:block; }
+.aguardando-box .pulse{
+  font-size:32px; display:block; margin-bottom:8px;
+  animation: pulseAnim 1.5s ease-in-out infinite;
+}
+@keyframes pulseAnim{
+  0%,100%{ transform:scale(1); opacity:1; }
+  50%{ transform:scale(1.15); opacity:.7; }
+}
+.aguardando-box p{ font-size:13.5px; color:#334; font-weight:600; margin-bottom:4px; }
+.aguardando-box small{ font-size:12px; color:#667; }
+
 /* ── Message ───────────────────────────────────────── */
 #msg{ margin-top:14px; text-align:center; font-size:14px; font-weight:600; min-height:20px; }
+#msgDados{ margin-bottom:12px; font-size:13px; color:var(--red); font-weight:600; }
 
 /* ── Loading spinner ───────────────────────────────── */
 .spinner{
@@ -232,16 +260,6 @@ select{
   text-align:center; padding:13px; font-size:11.5px;
   color:#999; border-top:1px solid #eee;
 }
-
-/* ── Etapa1 locking overlay ────────────────────────── */
-.field-locked{ position:relative; }
-.lock-overlay{
-  display:none; position:absolute; inset:0; background:rgba(255,255,255,.6);
-  border-radius:9px; z-index:2; cursor:not-allowed;
-  align-items:center; justify-content:center; font-size:18px;
-}
-.field-locked .lock-overlay{ display:flex; }
-.field-locked input, .field-locked select{ pointer-events:none; }
 </style>
 </head>
 <body>
@@ -249,7 +267,7 @@ select{
 
   <!-- Banner -->
   <div class="banner">
-    <img src="ebd.png">
+    <img src="ebd.png" alt="Conferência EBD">
     <div class="banner-overlay"></div>
   </div>
 
@@ -280,8 +298,8 @@ select{
 
     <div class="aviso">
       <strong>📋 Como funciona</strong>
-      Preencha seus dados abaixo, clique em <em>"Ir para o Pagamento"</em>, 
-      complete o PIX/cartão e você voltará automaticamente com a inscrição liberada!
+      Preencha seus dados, clique em <em>"Ir para o Pagamento"</em> (abre em nova aba),
+      efetue o PIX e depois clique em <em>"✅ Já paguei!"</em> para finalizar.
     </div>
 
     <form id="formDados" novalidate>
@@ -296,18 +314,6 @@ select{
           <label>Telefone *</label>
           <input type="tel" name="telefone" id="telefone" required placeholder="(91) 99999-9999">
         </div>
-        
-
-      <div class="field">
-        <label>Congregação *</label>
-        <input type="text" name="congregacao" required placeholder="Nome da sua congregação">
-      </div>
-
-      <div class="row2">
-        <div class="field">
-          <label>Grupo *</label>
-          <input type="text" name="grupo" required placeholder="Seu grupo">
-        </div>
         <div class="field">
           <label>Área *</label>
           <select name="area" required>
@@ -320,37 +326,58 @@ select{
         </div>
       </div>
 
-      <!-- Valor da inscrição -->
       <div class="field">
-        <label>Valor da inscrição</label>
-        <input type="text" value="R$ 35,00" disabled>
+        <label>Congregação *</label>
+        <input type="text" name="congregacao" required placeholder="Nome da sua congregação">
       </div>
 
-      <div id="msgDados" style="margin-bottom:12px;font-size:13px;color:var(--red);font-weight:600;"></div>
+      <div class="row2">
+        <div class="field">
+          <label>Grupo *</label>
+          <input type="text" name="grupo" required placeholder="Seu grupo">
+        </div>
+        <div class="field">
+          <label>Valor da inscrição</label>
+          <input type="text" value="R$ 35,00" disabled>
+        </div>
+      </div>
 
+      <div id="msgDados"></div>
+
+      <!-- Botão principal: abre pagamento -->
       <button type="submit" class="btn btn-pagar" id="btnPagar">
         💳 Ir para o Pagamento
       </button>
 
-    </form>
+      <!-- Caixa "aguardando" — aparece após clicar no botão acima -->
+      <div class="aguardando-box" id="aguardandoBox">
+        <span class="pulse">⏳</span>
+        <p>Janela de pagamento aberta!</p>
+        <small>Após concluir o PIX, clique no botão abaixo.</small>
+      </div>
 
+      <!-- Botão "Já paguei" — aparece após abrir o pagamento -->
+      <button type="button" class="btn btn-japaguei" id="btnJaPaguei" onclick="irParaEtapa2()">
+        ✅ Já paguei! Continuar
+      </button>
+
+    </form>
   </div>
 
-  <!-- ═══════════════ ETAPA 2 — Retorno do pagamento ═══════════════ -->
+  <!-- ═══════════════ ETAPA 2 — Comprovante ═══════════════ -->
   <div id="etapa2" class="form-area" style="display:none;">
 
-    <!-- Badge de pagamento confirmado -->
-    <div class="badge-pago" id="badgePago">
+    <div class="badge-pago show" id="badgePago">
       <span class="ico">✅</span>
       <div>
-        <strong>Pagamento confirmado!</strong><br>
+        <strong>Pagamento realizado!</strong><br>
         <span style="font-weight:400;font-size:12px;">Agora envie o comprovante para finalizar sua inscrição.</span>
       </div>
     </div>
 
-    <div class="aviso" id="avisoComprovante">
-      <strong>🧾 Quase lá! Envie o comprovante</strong>
-      Seu pagamento foi registrado. Faça upload do comprovante abaixo para concluir a inscrição.
+    <div class="aviso">
+      <strong>🧾 Último passo! Envie o comprovante</strong>
+      Faça upload do comprovante do seu PIX para concluir a inscrição e garantir sua vaga.
     </div>
 
     <!-- Comprovante -->
@@ -373,7 +400,6 @@ select{
     </button>
 
     <div id="msg"></div>
-
   </div>
 
   <!-- ═══════════════ TELA FINAL ═══════════════ -->
@@ -390,66 +416,17 @@ select{
   </div>
 
   <div class="footer">Criado por Bruno &mdash; Sistema de inscrição online · EBD</div>
-
 </div>
 
 <script>
-document.getElementById("formDados").addEventListener("submit", function(e){
-  e.preventDefault();
-
-  const msg = document.getElementById("msgDados");
-  const btn = document.getElementById("btnPagar");
-
-  const fd = new FormData(this);
-  const dados = {
-    nome: fd.get("nome")?.trim(),
-    telefone: fd.get("telefone")?.trim(),
-    congregacao: fd.get("congregacao")?.trim(),
-    grupo: fd.get("grupo")?.trim(),
-    area: fd.get("area")
-  };
-
-  const obrigatorios = ["nome", "telefone", "congregacao", "grupo", "area"];
-
-  for (const campo of obrigatorios) {
-    if (!dados[campo]) {
-      msg.textContent = `⚠️ Preencha o campo: ${campo}.`;
-      return;
-    }
-  }
-
-  msg.textContent = "";
-  btn.disabled = true;
-  btn.innerHTML = `<span class="spinner"></span> Redirecionando para pagamento...`;
-
-  // cria ID único do pedido
-  const orderId = "EBD-" + Date.now();
-  dados.orderId = orderId;
-
-  // salva os dados temporariamente
-  sessionStorage.setItem("inscricao_dados", JSON.stringify(dados));
-
-  // redireciona direto para o checkout da InfinitePay
- window.location.href = "https://invoice.infinitepay.io/midian-caldas/7jyloebjS7";
-});
-</script>
-
-<!-- CONFIG correta -->
-<script>
+/* ── CONFIG ── */
 const CONFIG = {
-  infiniteTag: "midian-caldas",
-  valorCentavos: 3500,
-  descricaoProduto: "Inscrição — Conferência da EBD",
-  urlScript: "https://script.google.com/macros/s/AKfycbwWefonXPItcv_9Hkeu6rx0Cbz4qhunIkMnOp7_lVOlV8nyM9Wkkt3ElQfiAKrsmQn_Hw/exec",
+  urlPagamento: "https://invoice.infinitepay.io/midian-caldas/7jyloebjS7",
+  urlScript: "https://script.google.com/macros/s/AKfycbzKdHQy-TaRGXYC9yxbJoLKqIYX017zEiBNGLI9xY1VlZWJL0vNqtd8eeq76Y5vY-g_PQ/exec",
   numeroZap: "5591992346353"
 };
 
-/* ── Utilitário: Gerenciamento de Estado ── */
 let dadosParticipante = {};
-
-function salvarDados(d){ try{ sessionStorage.setItem("inscricao_dados", JSON.stringify(d)); } catch(_){} }
-function recuperarDados(){ try{ return JSON.parse(sessionStorage.getItem("inscricao_dados") || "{}"); } catch(_){ return {}; } }
-function limparDados(){ try{ sessionStorage.removeItem("inscricao_dados"); } catch(_){} }
 
 /* ── Máscara telefone ── */
 document.getElementById("telefone").addEventListener("input", function(){
@@ -459,6 +436,63 @@ document.getElementById("telefone").addEventListener("input", function(){
   else if(v.length > 2) this.value = `(${v.slice(0,2)}) ${v.slice(2)}`;
   else if(v.length > 0) this.value = `(${v}`;
 });
+
+/* ── Etapa 1: Validar e abrir pagamento em nova aba ── */
+document.getElementById("formDados").addEventListener("submit", function(e){
+  e.preventDefault();
+
+  const msg = document.getElementById("msgDados");
+  const btn = document.getElementById("btnPagar");
+
+  const fd = new FormData(this);
+  dadosParticipante = {
+    nome:        fd.get("nome")?.trim(),
+    telefone:    fd.get("telefone")?.trim(),
+    congregacao: fd.get("congregacao")?.trim(),
+    grupo:       fd.get("grupo")?.trim(),
+    area:        fd.get("area"),
+    orderId:     "EBD-" + Date.now()
+  };
+
+  // Validação
+  const obrigatorios = ["nome","telefone","congregacao","grupo","area"];
+  for(const campo of obrigatorios){
+    if(!dadosParticipante[campo]){
+      msg.textContent = `⚠️ Preencha o campo obrigatório: ${campo}.`;
+      return;
+    }
+  }
+
+  msg.textContent = "";
+
+  // Salva na sessão
+  try{ sessionStorage.setItem("inscricao_dados", JSON.stringify(dadosParticipante)); }catch(_){}
+
+  // Abre pagamento em NOVA ABA
+  window.open(CONFIG.urlPagamento, "_blank");
+
+  // Troca visual da etapa 1
+  btn.disabled = true;
+  btn.innerHTML = `💳 Pagamento aberto em nova aba`;
+
+  document.getElementById("aguardandoBox").classList.add("show");
+  document.getElementById("btnJaPaguei").classList.add("show");
+});
+
+/* ── Ir para Etapa 2 após "Já paguei" ── */
+function irParaEtapa2(){
+  // Tenta recuperar dados da sessão caso a página tenha recarregado
+  if(!dadosParticipante.nome){
+    try{
+      dadosParticipante = JSON.parse(sessionStorage.getItem("inscricao_dados") || "{}");
+    }catch(_){}
+  }
+
+  document.getElementById("etapa1").style.display = "none";
+  document.getElementById("etapa2").style.display = "block";
+  setStep(2);
+  window.scrollTo({top:0, behavior:"smooth"});
+}
 
 /* ── Preview do comprovante ── */
 function mostrarPreview(input){
@@ -478,88 +512,7 @@ function mostrarPreview(input){
   wrap.style.display = "block";
 }
 
-/* ═══════════════════════════════════════════════════
-   ETAPA 1 — Formulário → Redirecionamento InfinityPay
-═══════════════════════════════════════════════════ */
-document.getElementById("formDados").addEventListener("submit", async function(e){
-  e.preventDefault();
-
-  const msg = document.getElementById("msgDados");
-  const btn = document.getElementById("btnPagar");
-
-  const fd = new FormData(this);
-  const dados = {
-    nome:        fd.get("nome")?.trim(),
-    telefone:    fd.get("telefone")?.trim(),
-    email:       fd.get("email")?.trim(),
-    congregacao: fd.get("congregacao")?.trim(),
-    grupo:       fd.get("grupo")?.trim(),
-    area:        fd.get("area"),
-  };
-
-  // Validação
-  if(!dados.nome || !dados.telefone || !dados.congregacao){
-    msg.textContent = "⚠️ Por favor, preencha todos os campos obrigatórios.";
-    return;
-  }
-
-  msg.textContent = "";
-  btn.disabled = true;
-  btn.innerHTML = `<span class="spinner"></span> Redirecionando para pagamento...`;
-
-  const orderId = "EBD-" + Date.now();
-  dados.orderId = orderId;
-  salvarDados(dados);
-
-  // URL de retorno (pago=1 indica que ele voltou do checkout)
-  const returnUrl = window.location.href.split("?")[0] + "?pago=1&order=" + orderId;
-  
-  // Montagem da URL de Checkout da InfinityPay
-  // Valor deve ser formatado (ex: 3500 vira 35.00)
-  const valorFormatado = (CONFIG.valorCentavos / 100).toFixed(2);
-  const checkoutUrl = `https://pay.infinitepay.io/${CONFIG.infiniteTag}/${valorFormatado}?metadata=${orderId}&redirect_url=${encodeURIComponent(returnUrl)}`;
-
-  // Redireciona o usuário
-  setTimeout(() => {
-    window.location.href = checkoutUrl;
-  }, 500);
-});
-
-/* ═══════════════════════════════════════════════════
-   RETORNO DO PAGAMENTO — Verificação e UI
-═══════════════════════════════════════════════════ */
-(function verificarRetorno(){
-  const params = new URLSearchParams(window.location.search);
-  const pago   = params.get("pago");
-  const order  = params.get("order");
-
-  if(!pago || !order) return;
-
-  const dadosSalvos = recuperarDados();
-
-  // Verifica se os dados batem com a sessão atual
-  if(dadosSalvos.orderId && dadosSalvos.orderId === order){
-    dadosParticipante = dadosSalvos;
-    
-    // Altera a interface para a Etapa 2
-    document.getElementById("etapa1").style.display = "none";
-    document.getElementById("etapa2").style.display = "block";
-    setStep(2);
-    
-    if(document.getElementById("badgePago")) {
-        document.getElementById("badgePago").classList.add("show");
-    }
-
-    // Limpa os parâmetros da URL para estética
-    try {
-      window.history.replaceState({}, "", window.location.pathname);
-    } catch(_){}
-  }
-})();
-
-/* ═══════════════════════════════════════════════════
-   ETAPA 2 — Envio para Google Sheets e Drive
-═══════════════════════════════════════════════════ */
+/* ── Etapa 2: Enviar para Google Sheets ── */
 async function confirmarInscricao(){
   const arquivoInput = document.getElementById("arquivoComprovante");
   const msg = document.getElementById("msg");
@@ -575,13 +528,12 @@ async function confirmarInscricao(){
   msg.style.color = "#1f6fff";
   msg.innerHTML = `<span class="spinner"></span> Finalizando sua inscrição...`;
 
-  const reader = new FileReader();
   const file = arquivoInput.files[0];
+  const reader = new FileReader();
 
-  reader.onload = async function() {
+  reader.onload = async function(){
     const base64 = reader.result.split(",")[1];
-    
-    // Dados para o Google Apps Script
+
     const payload = {
       ...dadosParticipante,
       arquivoBase64: base64,
@@ -589,57 +541,58 @@ async function confirmarInscricao(){
       arquivoMime: file.type
     };
 
-    try {
-      // Envio via POST para o Google Apps Script
-      const resp = await fetch(CONFIG.urlScript, {
+    try{
+      await fetch(CONFIG.urlScript, {
         method: "POST",
-        mode: "no-cors", // Necessário para evitar erros de CORS no redirecionamento do Google
+        mode: "no-cors",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
 
-      // Como o Google usa redirect e no-cors não permite ler a resposta,
-      // assumimos sucesso se não cair no catch após o tempo de envio.
-      limparDados();
+      // Limpa sessão e mostra tela final
+      try{ sessionStorage.removeItem("inscricao_dados"); }catch(_){}
       montarTelaFinal(dadosParticipante);
-      
-    } catch(err) {
+
+    }catch(err){
       console.error(err);
       msg.style.color = "#ff4d4d";
-      msg.innerHTML = "Erro ao salvar dados. Tente novamente.";
+      msg.innerHTML = "❌ Erro ao salvar. Tente novamente.";
       btn.disabled = false;
     }
   };
+
   reader.readAsDataURL(file);
 }
 
-/* ── Tela Final e WhatsApp ── */
+/* ── Tela Final ── */
 function montarTelaFinal(d){
   const texto =
     `✅ *Inscrição Confirmada — Conferência da EBD*\n\n` +
     `👤 *Nome:* ${d.nome}\n` +
     `📱 *Telefone:* ${d.telefone}\n` +
     `⛪ *Congregação:* ${d.congregacao}\n` +
+    `👥 *Grupo:* ${d.grupo}\n` +
     `📍 *Área:* ${d.area}\n` +
     `🆔 *Pedido:* ${d.orderId}\n\n` +
     `_Estou enviando o comprovante em anexo._`;
 
-  const zapUrl = `https://wa.me/${CONFIG.numeroZap}?text=${encodeURIComponent(texto)}`;
-  document.getElementById("linkZap").href = zapUrl;
+  document.getElementById("linkZap").href =
+    `https://wa.me/${CONFIG.numeroZap}?text=${encodeURIComponent(texto)}`;
 
   setStep(3);
   document.getElementById("etapa2").style.display = "none";
   document.getElementById("telaFinal").style.display = "block";
+  window.scrollTo({top:0, behavior:"smooth"});
 }
 
+/* ── Steps ── */
 function setStep(n){
   for(let i=1; i<=3; i++){
     const el = document.getElementById("s"+i);
-    if(el) {
-        el.classList.remove("active","done");
-        if(i < n) el.classList.add("done");
-        else if(i === n) el.classList.add("active");
-    }
+    if(!el) return;
+    el.classList.remove("active","done");
+    if(i < n) el.classList.add("done");
+    else if(i === n) el.classList.add("active");
   }
 }
 </script>
