@@ -11,10 +11,10 @@
 *{ box-sizing:border-box; margin:0; padding:0; }
 
 :root{
-  --green-dark:#024f01;
-  --green-mid:#046101;
-  --green-bright:#08a002;
-  --green-light:#e8f5e9;
+  --green-dark:#0a2a6e;
+  --green-mid:#1040a0;
+  --green-bright:#1a5fd4;
+  --green-light:#e8eeff;
   --gold:#c9930a;
   --gold-light:#fff8e1;
   --gold-border:#f5a500;
@@ -28,7 +28,7 @@
 
 body{
   font-family:"DM Sans",sans-serif;
-  background:linear-gradient(160deg,#013700 0%,#025e00 60%,#03800a 100%);
+  background:linear-gradient(160deg,#071a4a 0%,#0e2d80 60%,#1a4db5 100%);
   min-height:100vh;
   display:flex; align-items:center; justify-content:center;
   padding:20px;
@@ -49,11 +49,11 @@ body::before{
 }
 
 /* ── Banner ────────────────────────────────────────── */
-.banner{ position:relative; overflow:hidden; background:#013700; }
+.banner{ position:relative; overflow:hidden; background:#071a4a; }
 .banner img{ width:100%; display:block; max-height:200px; object-fit:cover; }
 .banner-overlay{
   position:absolute; inset:0;
-  background:linear-gradient(to top, rgba(2,79,1,.85) 0%, transparent 60%);
+  background:linear-gradient(to top, rgba(7,26,74,.85) 0%, transparent 60%);
 }
 
 /* ── Header strip ──────────────────────────────────── */
@@ -249,7 +249,7 @@ select{
 
   <!-- Banner -->
   <div class="banner">
-    <img src="ebd.png">
+    <img src="chá entre meninas 20 de março.png" alt="Banner Conferência EBD">
     <div class="banner-overlay"></div>
   </div>
 
@@ -296,11 +296,7 @@ select{
           <label>Telefone *</label>
           <input type="tel" name="telefone" id="telefone" required placeholder="(91) 99999-9999">
         </div>
-        <div class="field">
-          <label>E-mail</label>
-          <input type="email" name="email" placeholder="exemplo@email.com">
-        </div>
-      </div>
+        
 
       <div class="field">
         <label>Congregação *</label>
@@ -327,7 +323,7 @@ select{
       <!-- Valor da inscrição -->
       <div class="field">
         <label>Valor da inscrição</label>
-        <input type="text" value="R$ 30,00" disabled>
+        <input type="text" value="R$ 35,00" disabled>
       </div>
 
       <div id="msgDados" style="margin-bottom:12px;font-size:13px;color:var(--red);font-weight:600;"></div>
@@ -387,17 +383,13 @@ select{
     <p>
       Seus dados foram salvos com sucesso.<br>
       Clique abaixo para enviar o comprovante pelo WhatsApp
-      e aguarde a confirmação do seu líder de área.
     </p>
     <a id="linkZap" href="#" target="_blank" class="btn-zap">
       📲 Enviar comprovante no WhatsApp
     </a>
-    <p style="margin-top:18px;font-size:12px;color:#bbb;">
-      Após enviar, aguarde a confirmação do seu líder de área.
-    </p>
   </div>
 
-  <div class="footer">Criado por Bruno &mdash; Sistema de inscrição online · UAADEM</div>
+  <div class="footer">Criado por Bruno &mdash; Sistema de inscrição online · EBD</div>
 
 </div>
 
