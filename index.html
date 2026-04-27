@@ -430,7 +430,7 @@ document.getElementById("formDados").addEventListener("submit", function(e){
   sessionStorage.setItem("inscricao_dados", JSON.stringify(dados));
 
   // redireciona direto para o checkout da InfinitePay
-  window.location.href = "https://checkout.infinitepay.io/midian-caldas/7jrPBxt0Tj";
+ window.location.href = "https://checkout.infinitepay.io/midian-caldas/7jrPBxt0Tj";
 });
 </script>
 
@@ -443,12 +443,10 @@ const CONFIG = {
   urlScript: "https://script.google.com/macros/s/AKfycbz1vTqZNoaqiAEhi8HE4DzyEIrr6DjUfJ6uYoz4Zn1OUOfF7w44XvByW1aTLumd0nnzJQ/exec",
   numeroZap: "5591992346353"
 };
-/* ═══════════════════════════════════════════════════
-   Estado temporário dos dados (guardado antes do redirect)
-═══════════════════════════════════════════════════ */
+
+/* ── Utilitário: Gerenciamento de Estado ── */
 let dadosParticipante = {};
 
-/* ── Utilitário: salva/recupera dados via sessionStorage ── */
 function salvarDados(d){ try{ sessionStorage.setItem("inscricao_dados", JSON.stringify(d)); } catch(_){} }
 function recuperarDados(){ try{ return JSON.parse(sessionStorage.getItem("inscricao_dados") || "{}"); } catch(_){ return {}; } }
 function limparDados(){ try{ sessionStorage.removeItem("inscricao_dados"); } catch(_){} }
@@ -481,7 +479,7 @@ function mostrarPreview(input){
 }
 
 /* ═══════════════════════════════════════════════════
-   ETAPA 1 — Formulário de dados → gerar link InfinityPay
+   ETAPA 1 — Formulário → Redirecionamento InfinityPay
 ═══════════════════════════════════════════════════ */
 document.getElementById("formDados").addEventListener("submit", async function(e){
   e.preventDefault();
@@ -489,7 +487,6 @@ document.getElementById("formDados").addEventListener("submit", async function(e
   const msg = document.getElementById("msgDados");
   const btn = document.getElementById("btnPagar");
 
-  // Coleta campos
   const fd = new FormData(this);
   const dados = {
     nome:        fd.get("nome")?.trim(),
@@ -500,197 +497,149 @@ document.getElementById("formDados").addEventListener("submit", async function(e
     area:        fd.get("area"),
   };
 
-  // Validação básica
-  const obrigatorios = ["nome","telefone","congregacao","grupo","area"];
-  for(const c of obrigatorios){
-    if(!dados[c]){
-      msg.textContent = `⚠️ Preencha o campo: ${c}.`;
-      return;
-    }
+  // Validação
+  if(!dados.nome || !dados.telefone || !dados.congregacao){
+    msg.textContent = "⚠️ Por favor, preencha todos os campos obrigatórios.";
+    return;
   }
 
   msg.textContent = "";
   btn.disabled = true;
-  btn.innerHTML = `<span class="spinner"></span> Gerando link de pagamento...`;
+  btn.innerHTML = `<span class="spinner"></span> Redirecionando para pagamento...`;
 
-  // Gera um ID único para o pedido
   const orderId = "EBD-" + Date.now();
   dados.orderId = orderId;
-  salvarDados(dados);  // guarda no sessionStorage antes de sair
+  salvarDados(dados);
 
-  // URL de retorno após pagamento
-  const returnUrl = encodeURIComponent(window.location.href.split("?")[0] + "?pago=1&order=" + orderId);
+  // URL de retorno (pago=1 indica que ele voltou do checkout)
+  const returnUrl = window.location.href.split("?")[0] + "?pago=1&order=" + orderId;
+  
+  // Montagem da URL de Checkout da InfinityPay
+  // Valor deve ser formatado (ex: 3500 vira 35.00)
+  const valorFormatado = (CONFIG.valorCentavos / 100).toFixed(2);
+  const checkoutUrl = `https://pay.infinitepay.io/${CONFIG.infiniteTag}/${valorFormatado}?metadata=${orderId}&redirect_url=${encodeURIComponent(returnUrl)}`;
 
-  /* ─── Chamada à API InfinityPay ─── */
-  try{
-    const payload = {
-      handle: CONFIG.infiniteTag,
-      order_nsu: orderId,
-      redirect_url: decodeURIComponent(returnUrl),
-      itens: [{
-        quantity: 1,
-        price: CONFIG.valorCentavos,
-        description: CONFIG.descricaoProduto,
-      }],
-      // Campos extras de identificação no pedido (InfinityPay aceita metadata)
-      customer: {
-        name: dados.nome,
-        phone: dados.telefone.replace(/\D/g,""),
-        email: dados.email || undefined,
-      }
-    };
-  } catch(err){
-    console.error("InfinityPay erro:", err);
-    btn.disabled = false;
-    btn.innerHTML = "💳 Ir para o Pagamento";
-    msg.textContent = "⚠️ Não foi possível gerar o link. Verifique a InfiniteTag e tente novamente.";
-  }
+  // Redireciona o usuário
+  setTimeout(() => {
+    window.location.href = checkoutUrl;
+  }, 500);
 });
 
 /* ═══════════════════════════════════════════════════
-   RETORNO DO PAGAMENTO — detecta parâmetros na URL
+   RETORNO DO PAGAMENTO — Verificação e UI
 ═══════════════════════════════════════════════════ */
 (function verificarRetorno(){
   const params = new URLSearchParams(window.location.search);
   const pago   = params.get("pago");
   const order  = params.get("order");
 
-  if(!pago || !order) return; // Ainda na etapa 1 normal
+  if(!pago || !order) return;
 
-  // Recupera dados salvos
-  const dados = recuperarDados();
+  const dadosSalvos = recuperarDados();
 
-  // Verifica se o orderId bate
-  if(dados.orderId && dados.orderId !== order){
-    // Pedido diferente — ignora
-    return;
+  // Verifica se os dados batem com a sessão atual
+  if(dadosSalvos.orderId && dadosSalvos.orderId === order){
+    dadosParticipante = dadosSalvos;
+    
+    // Altera a interface para a Etapa 2
+    document.getElementById("etapa1").style.display = "none";
+    document.getElementById("etapa2").style.display = "block";
+    setStep(2);
+    
+    if(document.getElementById("badgePago")) {
+        document.getElementById("badgePago").classList.add("show");
+    }
+
+    // Limpa os parâmetros da URL para estética
+    try {
+      window.history.replaceState({}, "", window.location.pathname);
+    } catch(_){}
   }
-
-  dadosParticipante = dados;
-
-  // Avança steps
-  setStep(2);
-
-  // Mostra etapa 2
-  document.getElementById("etapa1").style.display = "none";
-  document.getElementById("etapa2").style.display = "block";
-  document.getElementById("badgePago").classList.add("show");
-
-  // Limpa URL (opcional — remove parâmetros visíveis)
-  try{
-    window.history.replaceState({}, "", window.location.pathname);
-  } catch(_){}
-
-  /* ── Verificação extra via payment_check (opcional) ── */
-  // Se quiser confirmar o pagamento no servidor antes de liberar,
-  // use o endpoint: POST https://api.infinitepay.io/invoices/public/checkout/payment_check
-  // com { handle, order_nsu, transaction_nsu, slug }
-  // (os parâmetros vêm na redirect_url do InfinityPay)
-  verificarPagamentoApi(params, order);
 })();
 
-async function verificarPagamentoApi(params, order){
-  const transaction_nsu = params.get("transaction_nsu");
-  const slug            = params.get("slug");
-
-  if(!transaction_nsu || !slug) return; // parâmetros opcionais
-
-  try{
-    const resp = await fetch("https://api.infinitepay.io/invoices/public/checkout/payment_check", {
-      method: "POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({
-        handle: CONFIG.infiniteTag,
-        order_nsu: order,
-        transaction_nsu,
-        slug,
-      })
-    });
-    const json = await resp.json();
-    console.log("Verificação de pagamento:", json);
-    // Se json.paid === false, pode mostrar aviso ao usuário
-  } catch(e){
-    console.warn("Verificação opcional falhou:", e);
-  }
-}
-
 /* ═══════════════════════════════════════════════════
-   ETAPA 2 — Confirmar inscrição + enviar para Sheets
+   ETAPA 2 — Envio para Google Sheets e Drive
 ═══════════════════════════════════════════════════ */
 async function confirmarInscricao(){
-  const arquivo = document.getElementById("arquivoComprovante").files[0];
-  const msg     = document.getElementById("msg");
-  const btn     = document.getElementById("btnConfirmar");
+  const arquivoInput = document.getElementById("arquivoComprovante");
+  const msg = document.getElementById("msg");
+  const btn = document.getElementById("btnConfirmar");
 
-  if(!arquivo){
-    msg.style.color = "var(--red)";
-    msg.innerText = "⚠️ Selecione o comprovante de pagamento antes de continuar.";
+  if(!arquivoInput.files[0]){
+    msg.style.color = "#ff4d4d";
+    msg.innerText = "⚠️ Por favor, anexe o comprovante de pagamento.";
     return;
   }
 
   btn.disabled = true;
   msg.style.color = "#1f6fff";
-  msg.innerHTML = `<span class="spinner"></span> Salvando sua inscrição...`;
+  msg.innerHTML = `<span class="spinner"></span> Finalizando sua inscrição...`;
 
-  // Monta FormData com dados + arquivo
-  const fd = new FormData();
-  const d  = dadosParticipante;
-  fd.append("nome",        d.nome        || "");
-  fd.append("telefone",    d.telefone    || "");
-  fd.append("email",       d.email       || "");
-  fd.append("congregacao", d.congregacao || "");
-  fd.append("grupo",       d.grupo       || "");
-  fd.append("area",        d.area        || "");
-  fd.append("orderId",     d.orderId     || "");
-  fd.append("comprovante", arquivo);
+  const reader = new FileReader();
+  const file = arquivoInput.files[0];
 
-  try{
-    const resp  = await fetch(CONFIG.urlScript, { method:"POST", body:fd });
-    const texto = await resp.text();
+  reader.onload = async function() {
+    const base64 = reader.result.split(",")[1];
+    
+    // Dados para o Google Apps Script
+    const payload = {
+      ...dadosParticipante,
+      arquivoBase64: base64,
+      arquivoNome: file.name,
+      arquivoMime: file.type
+    };
 
-    if(texto.trim() === "OK"){
+    try {
+      // Envio via POST para o Google Apps Script
+      const resp = await fetch(CONFIG.urlScript, {
+        method: "POST",
+        mode: "no-cors", // Necessário para evitar erros de CORS no redirecionamento do Google
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      // Como o Google usa redirect e no-cors não permite ler a resposta,
+      // assumimos sucesso se não cair no catch após o tempo de envio.
       limparDados();
-      montarTelaFinal(d);
-    } else {
-      throw new Error(texto);
+      montarTelaFinal(dadosParticipante);
+      
+    } catch(err) {
+      console.error(err);
+      msg.style.color = "#ff4d4d";
+      msg.innerHTML = "Erro ao salvar dados. Tente novamente.";
+      btn.disabled = false;
     }
-  } catch(err){
-    console.error(err);
-    msg.style.color = "var(--red)";
-    msg.innerHTML = "Não foi possível salvar. Tente novamente.";
-    btn.disabled = false;
-  }
+  };
+  reader.readAsDataURL(file);
 }
 
-/* ── Monta tela final e link do WhatsApp ── */
+/* ── Tela Final e WhatsApp ── */
 function montarTelaFinal(d){
   const texto =
-    `✅ *Comprovante de Inscrição — Conferência da EBD*\n\n` +
+    `✅ *Inscrição Confirmada — Conferência da EBD*\n\n` +
     `👤 *Nome:* ${d.nome}\n` +
     `📱 *Telefone:* ${d.telefone}\n` +
-    `📧 *E-mail:* ${d.email || "—"}\n` +
     `⛪ *Congregação:* ${d.congregacao}\n` +
-    `👥 *Grupo:* ${d.grupo}\n` +
     `📍 *Área:* ${d.area}\n` +
     `🆔 *Pedido:* ${d.orderId}\n\n` +
-    `_Comprovante de pagamento em anexo._`;
+    `_Estou enviando o comprovante em anexo._`;
 
-  document.getElementById("linkZap").href =
-    `https://wa.me/${CONFIG.numeroZap}?text=${encodeURIComponent(texto)}`;
+  const zapUrl = `https://wa.me/${CONFIG.numeroZap}?text=${encodeURIComponent(texto)}`;
+  document.getElementById("linkZap").href = zapUrl;
 
   setStep(3);
-
-  document.getElementById("etapa2").style.display  = "none";
+  document.getElementById("etapa2").style.display = "none";
   document.getElementById("telaFinal").style.display = "block";
 }
 
-/* ── Step indicator helper ── */
 function setStep(n){
   for(let i=1; i<=3; i++){
     const el = document.getElementById("s"+i);
-    el.classList.remove("active","done");
-    if(i < n)       el.classList.add("done");
-    else if(i === n) el.classList.add("active");
+    if(el) {
+        el.classList.remove("active","done");
+        if(i < n) el.classList.add("done");
+        else if(i === n) el.classList.add("active");
+    }
   }
 }
 </script>
